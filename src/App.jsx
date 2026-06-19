@@ -92,4 +92,293 @@ function generateHTML(originalText, diagnosis, rewrittenText) {
 </style>
 </head>
 <body>
-<div
+<div class="header">
+  <div class="badge">HUBSPOT ACADEMY</div>
+  <h1>Optimizador de contenido para AEO — Resultado del ejercicio</h1>
+</div>
+
+<h2>Resultado del diagnóstico</h2>
+<div class="score">Cumples <strong>${passedCount} de 3</strong> criterios de optimización para AEO.</div>
+<table>
+  <tr>
+    <th>Pilar</th><th>Criterio</th><th>Resultado</th>
+  </tr>
+  ${diagnosisRows}
+</table>
+
+<h2>Párrafo original</h2>
+<div class="text-block">${originalText}</div>
+
+<h2>Párrafo optimizado</h2>
+<div class="text-block optimized">${rewrittenText || "(No se completó la reescritura)"}</div>
+
+<div class="footer">HubSpot Academy · Certificación en optimización para motores de respuesta (AEO)</div>
+</body>
+</html>`;
+}
+
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [originalText, setOriginalText] = useState("");
+  const [diagnosis, setDiagnosis] = useState({ entity: null, triple: null, autonomous: null });
+  const [rewrittenText, setRewrittenText] = useState("");
+
+  const diagnosisComplete = DIAGNOSIS_ITEMS.every(i => diagnosis[i.id] !== null);
+  const failedItems = DIAGNOSIS_ITEMS.filter(i => diagnosis[i.id] === false);
+  const passedCount = DIAGNOSIS_ITEMS.filter(i => diagnosis[i.id] === true).length;
+
+  const scoreColor =
+    passedCount === 3 ? COLORS.teal :
+    passedCount === 2 ? COLORS.yellow :
+    COLORS.red;
+
+  const scoreLabel =
+    passedCount === 3 ? "¡Listo para AEO!" :
+    passedCount === 2 ? "Casi listo — ajusta los puntos pendientes" :
+    "Necesita optimización";
+
+  function handleDownload() {
+    const html = generateHTML(originalText, diagnosis, rewrittenText);
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "aeo-resultado.html";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function setDiag(id, value) {
+    setDiagnosis(prev => ({ ...prev, [id]: value }));
+  }
+
+  const canNext =
+    step === 0 ? originalText.trim().length > 80 :
+    step === 1 ? diagnosisComplete :
+    step === 2 ? rewrittenText.trim().length > 40 :
+    true;
+
+  return (
+    <div style={{ fontFamily: "sans-serif", color: COLORS.text, minHeight: "100vh", background: COLORS.light }}>
+      {/* Header */}
+      <div style={{ background: COLORS.navy, padding: "0 24px", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", alignItems: "center", gap: 16, height: 56 }}>
+          <span style={{ background: COLORS.orange, color: "white", fontSize: 10, fontWeight: 700, letterSpacing: 1, padding: "3px 8px", borderRadius: 4 }}>
+            HUBSPOT ACADEMY
+          </span>
+          <span style={{ color: "white", fontWeight: 600, fontSize: 14 }}>
+            Optimizador de contenido para AEO
+          </span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ background: "#e5e9ef", height: 4 }}>
+        <div style={{ background: COLORS.teal, height: 4, width: `${((step + 1) / STEPS.length) * 100}%`, transition: "width 0.4s" }} />
+      </div>
+
+      {/* Step labels */}
+      <div style={{ background: "white", borderBottom: `1px solid ${COLORS.border}` }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", display: "flex" }}>
+          {STEPS.map((label, i) => (
+            <div key={i} style={{
+              flex: 1, textAlign: "center", padding: "10px 4px", fontSize: 12, fontWeight: 600,
+              color: i === step ? COLORS.teal : i < step ? COLORS.slate : "#aab4bf",
+              borderBottom: i === step ? `2px solid ${COLORS.teal}` : "2px solid transparent",
+            }}>
+              {i < step ? "✓ " : ""}{label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px" }}>
+
+        {/* STEP 0 — Pega tu párrafo */}
+        {step === 0 && (
+          <div>
+            <h2 style={{ color: COLORS.navy, marginTop: 0 }}>Pega tu párrafo</h2>
+            <p style={{ color: COLORS.slate, lineHeight: 1.7 }}>
+              Elige un fragmento de una página real de tu sitio web — puede ser el párrafo de introducción, una descripción de producto o cualquier sección clave. Pégalo aquí tal como está, sin modificarlo todavía.
+            </p>
+            <div style={{ background: "#FFF8E1", border: `1px solid ${COLORS.yellow}`, borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13 }}>
+              💡 <strong>Consejo:</strong> Elige una página que ya tenga tráfico orgánico. Ese contenido ya es relevante para los buscadores — optimizarlo para AEO genera más impacto con menos esfuerzo.
+            </div>
+            <textarea
+              value={originalText}
+              onChange={e => setOriginalText(e.target.value)}
+              placeholder="Pega aquí tu párrafo original..."
+              style={{
+                width: "100%", minHeight: 180, padding: 16, fontSize: 14, lineHeight: 1.7,
+                border: `1px solid ${COLORS.border}`, borderRadius: 8, resize: "vertical",
+                fontFamily: "sans-serif", color: COLORS.text, boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+            <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 6 }}>
+              {originalText.trim().length < 80
+                ? `Mínimo 80 caracteres (llevas ${originalText.trim().length})`
+                : `✓ ${originalText.trim().length} caracteres`}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 1 — Diagnóstico */}
+        {step === 1 && (
+          <div>
+            <h2 style={{ color: COLORS.navy, marginTop: 0 }}>Diagnóstico guiado</h2>
+            <p style={{ color: COLORS.slate, lineHeight: 1.7 }}>
+              Lee tu párrafo y responde las tres preguntas. Sé honesto — el diagnóstico solo es útil si refleja el estado real del contenido.
+            </p>
+
+            <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 16, marginBottom: 24, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>TU PÁRRAFO</div>
+              {originalText}
+            </div>
+
+            {DIAGNOSIS_ITEMS.map((item) => (
+              <div key={item.id} style={{
+                background: "white", border: `1px solid ${diagnosis[item.id] === true ? COLORS.teal : diagnosis[item.id] === false ? COLORS.red : COLORS.border}`,
+                borderRadius: 8, padding: 20, marginBottom: 16, transition: "border-color 0.2s"
+              }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ background: COLORS.navy, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4 }}>{item.pilar}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>{item.label}</span>
+                </div>
+                <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.6 }}>{item.question}</p>
+                <div style={{ background: COLORS.light, borderRadius: 6, padding: "10px 14px", fontSize: 12, color: COLORS.slate, marginBottom: 16 }}>
+                  💡 {item.hint}
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  {[true, false].map(val => (
+                    <button key={String(val)} onClick={() => setDiag(item.id, val)} style={{
+                      padding: "8px 24px", borderRadius: 6, border: `2px solid ${diagnosis[item.id] === val ? (val ? COLORS.teal : COLORS.red) : COLORS.border}`,
+                      background: diagnosis[item.id] === val ? (val ? COLORS.teal : COLORS.red) : "white",
+                      color: diagnosis[item.id] === val ? "white" : COLORS.text,
+                      fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.15s"
+                    }}>
+                      {val ? "Sí" : "No"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {diagnosisComplete && (
+              <div style={{ background: "white", border: `2px solid ${scoreColor}`, borderRadius: 8, padding: 16, marginTop: 8, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", background: scoreColor, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20, flexShrink: 0 }}>
+                  {passedCount}/3
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: scoreColor }}>{scoreLabel}</div>
+                  <div style={{ fontSize: 13, color: COLORS.slate, marginTop: 2 }}>
+                    {passedCount === 3
+                      ? "Tu párrafo ya cumple los tres criterios. La reescritura lo dejará aún más sólido."
+                      : `Tienes ${3 - passedCount} aspecto${3 - passedCount > 1 ? "s" : ""} por mejorar. El siguiente paso te guía cómo hacerlo.`}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STEP 2 — Reescritura */}
+        {step === 2 && (
+          <div>
+            <h2 style={{ color: COLORS.navy, marginTop: 0 }}>Reescribe tu párrafo</h2>
+            <p style={{ color: COLORS.slate, lineHeight: 1.7 }}>
+              Basándote en tu diagnóstico, reescribe el párrafo aplicando las correcciones necesarias. Usa las guías específicas para cada criterio que no cumpliste.
+            </p>
+
+            {failedItems.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.navy, marginBottom: 12 }}>Qué debes corregir:</div>
+                {failedItems.map(item => (
+                  <div key={item.id} style={{ background: "#FFF3F3", border: `1px solid #f7c5c7`, borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                    <div style={{ fontWeight: 700, color: COLORS.red, fontSize: 13, marginBottom: 8 }}>❌ {item.label}</div>
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {item.guidanceIfNo.map((g, i) => (
+                        <li key={i} style={{ fontSize: 13, lineHeight: 1.7, color: COLORS.text, marginBottom: 4 }}>{g}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {passedCount === 3 && (
+              <div style={{ background: "#E8FAF8", border: `1px solid ${COLORS.teal}`, borderRadius: 8, padding: 14, marginBottom: 20, fontSize: 13 }}>
+                ✅ Tu párrafo ya cumple los tres criterios. Aun así, reescríbelo para consolidar las técnicas y ver la diferencia en el resultado final.
+              </div>
+            )}
+
+            <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 14, marginBottom: 20, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>PÁRRAFO ORIGINAL (referencia)</div>
+              {originalText}
+            </div>
+
+            <textarea
+              value={rewrittenText}
+              onChange={e => setRewrittenText(e.target.value)}
+              placeholder="Escribe aquí tu versión optimizada..."
+              style={{
+                width: "100%", minHeight: 180, padding: 16, fontSize: 14, lineHeight: 1.7,
+                border: `1px solid ${COLORS.teal}`, borderRadius: 8, resize: "vertical",
+                fontFamily: "sans-serif", color: COLORS.text, boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+            <div style={{ fontSize: 12, color: COLORS.slate, marginTop: 6 }}>
+              {rewrittenText.trim().length < 40 ? "Escribe tu versión optimizada para continuar" : `✓ ${rewrittenText.trim().length} caracteres`}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3 — Antes / Después */}
+        {step === 3 && (
+          <div>
+            <h2 style={{ color: COLORS.navy, marginTop: 0 }}>Antes / Después</h2>
+            <p style={{ color: COLORS.slate, lineHeight: 1.7 }}>
+              Compara tu versión original con la optimizada. Esta es la diferencia que los motores de respuesta van a notar.
+            </p>
+
+            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+              {DIAGNOSIS_ITEMS.map(item => (
+                <div key={item.id} style={{
+                  flex: 1, background: "white", border: `2px solid ${diagnosis[item.id] === true ? COLORS.teal : COLORS.red}`,
+                  borderRadius: 8, padding: "10px 12px", textAlign: "center"
+                }}>
+                  <div style={{ fontSize: 18 }}>{diagnosis[item.id] === true ? "✅" : "✏️"}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.navy, marginTop: 4 }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: diagnosis[item.id] === true ? COLORS.teal : COLORS.orange, fontWeight: 600, marginTop: 2 }}>
+                    {diagnosis[item.id] === true ? "Ya cumplía" : "Corregido"}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.slate, letterSpacing: 0.5, marginBottom: 8 }}>ORIGINAL</div>
+                <div style={{
+                  background: "white", border: `1px solid ${COLORS.border}`, borderLeft: `4px solid #ccc`,
+                  borderRadius: "0 8px 8px 0", padding: 16, fontSize: 13, lineHeight: 1.8, color: COLORS.slate, minHeight: 160
+                }}>
+                  {originalText}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.teal, letterSpacing: 0.5, marginBottom: 8 }}>OPTIMIZADO PARA AEO</div>
+                <div style={{
+                  background: "#E8FAF8", border: `1px solid ${COLORS.teal}`, borderLeft: `4px solid ${COLORS.teal}`,
+                  borderRadius: "0 8px 8px 0", padding: 16, fontSize: 13, lineHeight: 1.8, color: COLORS.text, minHeight: 160
+                }}>
+                  {rewrittenText}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ background: COLORS.navy, borderRadius: 10, padding: 24, textAlign: "center" }}>
+              <div style={{ color: "white", fontWeight: 700, fontSize: 16, marginBottom: 6 }}>
+                ¡Ejercicio completado!
