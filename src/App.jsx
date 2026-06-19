@@ -232,12 +232,13 @@ export default function App() {
               Lee tu párrafo y responde las tres preguntas. Sé honesto — el diagnóstico solo es útil si refleja el estado real del contenido.
             </p>
 
+            {/* Original text preview */}
             <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 16, marginBottom: 24, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>TU PÁRRAFO</div>
               {originalText}
             </div>
 
-            {DIAGNOSIS_ITEMS.map((item) => (
+            {DIAGNOSIS_ITEMS.map((item, idx) => (
               <div key={item.id} style={{
                 background: "white", border: `1px solid ${diagnosis[item.id] === true ? COLORS.teal : diagnosis[item.id] === false ? COLORS.red : COLORS.border}`,
                 borderRadius: 8, padding: 20, marginBottom: 16, transition: "border-color 0.2s"
@@ -291,6 +292,7 @@ export default function App() {
               Basándote en tu diagnóstico, reescribe el párrafo aplicando las correcciones necesarias. Usa las guías específicas para cada criterio que no cumpliste.
             </p>
 
+            {/* Guidance for failed items */}
             {failedItems.length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.navy, marginBottom: 12 }}>Qué debes corregir:</div>
@@ -313,6 +315,7 @@ export default function App() {
               </div>
             )}
 
+            {/* Reference */}
             <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 14, marginBottom: 20, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>PÁRRAFO ORIGINAL (referencia)</div>
               {originalText}
@@ -343,6 +346,7 @@ export default function App() {
               Compara tu versión original con la optimizada. Esta es la diferencia que los motores de respuesta van a notar.
             </p>
 
+            {/* Score summary */}
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
               {DIAGNOSIS_ITEMS.map(item => (
                 <div key={item.id} style={{
@@ -358,6 +362,7 @@ export default function App() {
               ))}
             </div>
 
+            {/* Side by side */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.slate, letterSpacing: 0.5, marginBottom: 8 }}>ORIGINAL</div>
@@ -382,3 +387,50 @@ export default function App() {
             <div style={{ background: COLORS.navy, borderRadius: 10, padding: 24, textAlign: "center" }}>
               <div style={{ color: "white", fontWeight: 700, fontSize: 16, marginBottom: 6 }}>
                 ¡Ejercicio completado!
+              </div>
+              <div style={{ color: "#a8bccf", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+                Descarga tu resultado para guardar el antes/después y tu diagnóstico completo.
+              </div>
+              <button onClick={handleDownload} style={{
+                background: COLORS.orange, color: "white", border: "none", borderRadius: 6,
+                padding: "12px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer"
+              }}>
+                Descargar resultado ↓
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
+          <button
+            onClick={() => setStep(s => s - 1)}
+            disabled={step === 0}
+            style={{
+              padding: "10px 24px", borderRadius: 6, border: `1px solid ${COLORS.border}`,
+              background: "white", color: step === 0 ? "#ccc" : COLORS.text,
+              fontWeight: 600, fontSize: 14, cursor: step === 0 ? "default" : "pointer"
+            }}
+          >
+            ← Anterior
+          </button>
+
+          {step < STEPS.length - 1 && (
+            <button
+              onClick={() => setStep(s => s + 1)}
+              disabled={!canNext}
+              style={{
+                padding: "10px 28px", borderRadius: 6, border: "none",
+                background: canNext ? COLORS.teal : "#ccc",
+                color: "white", fontWeight: 700, fontSize: 14,
+                cursor: canNext ? "pointer" : "default", transition: "background 0.2s"
+              }}
+            >
+              Siguiente →
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
