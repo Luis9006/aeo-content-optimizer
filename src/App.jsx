@@ -46,6 +46,18 @@ const DIAGNOSIS_ITEMS = [
     ],
   },
   {
+    id: "heading",
+    pilar: "Pilar 2",
+    label: "Encabezado descriptivo",
+    question: "¿El encabezado de esta sección describe con precisión la pregunta que responde el contenido?",
+    hint: 'Un encabezado como "Beneficios" o "Más información" no le dice nada a la IA. Debe describir la pregunta que responde: "Cómo [marca] reduce el tiempo de [proceso]" es un encabezado que la IA puede identificar y citar.',
+    guidanceIfNo: [
+      'Reescribe el encabezado como una pregunta o una afirmación que describa exactamente qué aprenderá o encontrará quien lea esta sección.',
+      'Evita encabezados genéricos como "Ventajas", "Características" o "Solución". Sé específico: ¿qué problema resuelve? ¿para quién?',
+      "Incluye el nombre de tu marca o producto en el encabezado cuando sea relevante para la búsqueda.",
+    ],
+  },
+  {
     id: "autonomous",
     pilar: "Pilar 2",
     label: "Fragmento autónomo",
@@ -59,7 +71,7 @@ const DIAGNOSIS_ITEMS = [
   },
 ];
 
-function generateHTML(originalText, diagnosis, rewrittenText) {
+function generateHTML(headingText, originalText, diagnosis, rewrittenText) {
   const diagnosisRows = DIAGNOSIS_ITEMS.map((item) => {
     const answer = diagnosis[item.id];
     const status = answer === true ? "✅ Sí" : answer === false ? "❌ No" : "—";
@@ -98,7 +110,7 @@ function generateHTML(originalText, diagnosis, rewrittenText) {
 </div>
 
 <h2>Resultado del diagnóstico</h2>
-<div class="score">Cumples <strong>${passedCount} de 3</strong> criterios de optimización para AEO.</div>
+<div class="score">Cumples <strong>${passedCount} de 4</strong> criterios de optimización para AEO.</div>
 <table>
   <tr>
     <th>Pilar</th><th>Criterio</th><th>Resultado</th>
@@ -107,7 +119,7 @@ function generateHTML(originalText, diagnosis, rewrittenText) {
 </table>
 
 <h2>Párrafo original</h2>
-<div class="text-block">${originalText}</div>
+<div class="text-block"><strong>${headingText}</strong>\n${originalText}</div>
 
 <h2>Párrafo optimizado</h2>
 <div class="text-block optimized">${rewrittenText || "(No se completó la reescritura)"}</div>
@@ -120,7 +132,8 @@ function generateHTML(originalText, diagnosis, rewrittenText) {
 export default function App() {
   const [step, setStep] = useState(0);
   const [originalText, setOriginalText] = useState("");
-  const [diagnosis, setDiagnosis] = useState({ entity: null, triple: null, autonomous: null });
+  const [headingText, setHeadingText] = useState("");
+  const [diagnosis, setDiagnosis] = useState({ entity: null, triple: null, heading: null, autonomous: null });
   const [rewrittenText, setRewrittenText] = useState("");
 
   const diagnosisComplete = DIAGNOSIS_ITEMS.every(i => diagnosis[i.id] !== null);
@@ -128,17 +141,17 @@ export default function App() {
   const passedCount = DIAGNOSIS_ITEMS.filter(i => diagnosis[i.id] === true).length;
 
   const scoreColor =
-    passedCount === 3 ? COLORS.teal :
-    passedCount === 2 ? COLORS.yellow :
+    passedCount === 4 ? COLORS.teal :
+    passedCount >= 2 ? COLORS.yellow :
     COLORS.red;
 
   const scoreLabel =
-    passedCount === 3 ? "¡Listo para AEO!" :
-    passedCount === 2 ? "Casi listo — ajusta los puntos pendientes" :
+    passedCount === 4 ? "¡Listo para AEO!" :
+    passedCount >= 2 ? "Casi listo — ajusta los puntos pendientes" :
     "Necesita optimización";
 
   function handleDownload() {
-    const html = generateHTML(originalText, diagnosis, rewrittenText);
+    const html = generateHTML(headingText, originalText, diagnosis, rewrittenText);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -153,7 +166,7 @@ export default function App() {
   }
 
   const canNext =
-    step === 0 ? originalText.trim().length > 80 :
+    step === 0 ? originalText.trim().length > 80 && headingText.trim().length > 5 :
     step === 1 ? diagnosisComplete :
     step === 2 ? rewrittenText.trim().length > 40 :
     true;
@@ -205,6 +218,32 @@ export default function App() {
             <div style={{ background: "#FFF8E1", border: `1px solid ${COLORS.yellow}`, borderRadius: 8, padding: "12px 16px", marginBottom: 20, fontSize: 13 }}>
               💡 <strong>Consejo:</strong> Elige una página que ya tenga tráfico orgánico. Ese contenido ya es relevante para los buscadores — optimizarlo para AEO genera más impacto con menos esfuerzo.
             </div>
+
+            <label style={{ fontWeight: 700, fontSize: 14, color: COLORS.navy, display: "block", marginBottom: 6 }}>
+              Encabezado de la sección <span style={{ color: COLORS.red }}>*</span>
+            </label>
+            <p style={{ fontSize: 13, color: COLORS.slate, marginTop: 0, marginBottom: 8 }}>
+              Escribe el encabezado (H2 o H3) de la sección donde aparece tu párrafo.
+            </p>
+            <input
+              type="text"
+              value={headingText}
+              onChange={e => setHeadingText(e.target.value)}
+              placeholder="Ej: Beneficios de nuestra plataforma"
+              style={{
+                width: "100%", padding: "12px 14px", fontSize: 14,
+                border: `1px solid ${COLORS.border}`, borderRadius: 8,
+                fontFamily: "sans-serif", color: COLORS.text, boxSizing: "border-box",
+                outline: "none", marginBottom: 20,
+              }}
+            />
+
+            <label style={{ fontWeight: 700, fontSize: 14, color: COLORS.navy, display: "block", marginBottom: 6 }}>
+              Párrafo de la sección <span style={{ color: COLORS.red }}>*</span>
+            </label>
+            <p style={{ fontSize: 13, color: COLORS.slate, marginTop: 0, marginBottom: 8 }}>
+              Pega el párrafo que aparece bajo ese encabezado, tal como está, sin modificarlo todavía.
+            </p>
             <textarea
               value={originalText}
               onChange={e => setOriginalText(e.target.value)}
@@ -234,7 +273,8 @@ export default function App() {
 
             {/* Original text preview */}
             <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 16, marginBottom: 24, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>TU PÁRRAFO</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>TU CONTENIDO</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.navy, marginBottom: 8 }}>{headingText}</div>
               {originalText}
             </div>
 
@@ -269,14 +309,14 @@ export default function App() {
             {diagnosisComplete && (
               <div style={{ background: "white", border: `2px solid ${scoreColor}`, borderRadius: 8, padding: 16, marginTop: 8, display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 48, height: 48, borderRadius: "50%", background: scoreColor, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20, flexShrink: 0 }}>
-                  {passedCount}/3
+                  {passedCount}/4
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, color: scoreColor }}>{scoreLabel}</div>
                   <div style={{ fontSize: 13, color: COLORS.slate, marginTop: 2 }}>
-                    {passedCount === 3
-                      ? "Tu párrafo ya cumple los tres criterios. La reescritura lo dejará aún más sólido."
-                      : `Tienes ${3 - passedCount} aspecto${3 - passedCount > 1 ? "s" : ""} por mejorar. El siguiente paso te guía cómo hacerlo.`}
+                    {passedCount === 4
+                      ? "Tu párrafo ya cumple los cuatro criterios. La reescritura lo dejará aún más sólido."
+                      : `Tienes ${4 - passedCount} aspecto${4 - passedCount > 1 ? "s" : ""} por mejorar. El siguiente paso te guía cómo hacerlo.`}
                   </div>
                 </div>
               </div>
@@ -309,15 +349,16 @@ export default function App() {
               </div>
             )}
 
-            {passedCount === 3 && (
+            {passedCount === 4 && (
               <div style={{ background: "#E8FAF8", border: `1px solid ${COLORS.teal}`, borderRadius: 8, padding: 14, marginBottom: 20, fontSize: 13 }}>
-                ✅ Tu párrafo ya cumple los tres criterios. Aun así, reescríbelo para consolidar las técnicas y ver la diferencia en el resultado final.
+                ✅ Tu párrafo ya cumple los cuatro criterios. Aun así, reescríbelo para consolidar las técnicas y ver la diferencia en el resultado final.
               </div>
             )}
 
             {/* Reference */}
             <div style={{ background: "white", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 14, marginBottom: 20, fontSize: 13, lineHeight: 1.7, color: COLORS.slate }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>PÁRRAFO ORIGINAL (referencia)</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.orange, marginBottom: 8, letterSpacing: 0.5 }}>CONTENIDO ORIGINAL (referencia)</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.navy, marginBottom: 6 }}>{headingText}</div>
               {originalText}
             </div>
 
@@ -370,6 +411,7 @@ export default function App() {
                   background: "white", border: `1px solid ${COLORS.border}`, borderLeft: `4px solid #ccc`,
                   borderRadius: "0 8px 8px 0", padding: 16, fontSize: 13, lineHeight: 1.8, color: COLORS.slate, minHeight: 160
                 }}>
+                  <div style={{ fontWeight: 700, color: COLORS.slate, marginBottom: 8 }}>{headingText}</div>
                   {originalText}
                 </div>
               </div>
