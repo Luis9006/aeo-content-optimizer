@@ -439,6 +439,9 @@ export default function App() {
               }}>
                 Descargar resultado ↓
               </button>
+              <p style={{ color: "#a8bccf", fontSize: 12, marginTop: 10, marginBottom: 0 }}>
+                Se descarga como HTML — ábrelo en tu navegador e imprímelo como PDF.
+              </p>
             </div>
           </div>
         )}
